@@ -181,6 +181,39 @@ export async function setEmployeePassword(
   }
 }
 
+/**
+ * Self-service password change — any logged-in user changing THEIR OWN password.
+ * Requires the current password. Never touches other accounts.
+ */
+export async function changeOwnPassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<ActionResult> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return fail("Sessão inválida.");
+    if (!newPassword || newPassword.length < 6) {
+      return fail("A nova palavra-passe deve ter pelo menos 6 caracteres.");
+    }
+    const me = await prisma.employee.findUnique({ where: { id: user.id } });
+    if (!me || !me.passwordHash) {
+      return fail(
+        "A sua conta não tem palavra-passe definida. Contacte o administrador."
+      );
+    }
+    const match = await bcrypt.compare(currentPassword, me.passwordHash);
+    if (!match) return fail("A palavra-passe atual está incorreta.");
+
+    await prisma.employee.update({
+      where: { id: user.id },
+      data: { passwordHash: await bcrypt.hash(newPassword, 12) },
+    });
+    return ok;
+  } catch (e) {
+    return fail((e as Error).message);
+  }
+}
+
 export async function deleteEmployee(id: string): Promise<ActionResult> {
   try {
     const actor = await requireManager();

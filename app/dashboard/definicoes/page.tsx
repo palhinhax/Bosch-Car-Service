@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/page-header";
 import { SettingsForm } from "@/features/definicoes/settings-form";
+import { ChangePasswordForm } from "@/features/definicoes/change-password-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getCurrentUser, roleCanApprove } from "@/lib/auth/session";
@@ -34,6 +35,15 @@ export default async function DefinicoesPage() {
         title="Definições"
         description="Configuração da oficina e permissões."
       />
+
+      <Card>
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base">A minha conta</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-2">
+          <ChangePasswordForm />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="p-4 pb-2">

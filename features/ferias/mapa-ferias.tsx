@@ -93,7 +93,12 @@ export function MapaFerias({
   );
 
   const occupancy = useMemo(
-    () => buildOccupancy(filteredVacations, { includePending: true }),
+    () =>
+      // Vacations are not shown on weekends — those cells stay "fim-de-semana".
+      buildOccupancy(filteredVacations, {
+        includePending: true,
+        includeWeekends: false,
+      }),
     [filteredVacations]
   );
 
@@ -167,8 +172,10 @@ export function MapaFerias({
   // For the day dialog show ALL employees (ignore filter) so managers see the
   // full picture even while filtering the grid.
   const daySegmentsFull = selectedDay
-    ? (buildOccupancy(vacations, { includePending: true }).get(selectedDay) ??
-      [])
+    ? (buildOccupancy(vacations, {
+        includePending: true,
+        includeWeekends: false,
+      }).get(selectedDay) ?? [])
     : [];
 
   const approve = (id: string, status: "APPROVED" | "REJECTED") =>
@@ -286,10 +293,12 @@ export function MapaFerias({
         </div>
       )}
 
-      {/* Print-only company header */}
-      <div className="hidden print:block">
-        <h2 className="text-xl font-bold">{companyName}</h2>
-        <p className="text-sm">Mapa de Férias {year}</p>
+      {/* Print-only document header */}
+      <div className="hidden print:mb-3 print:block">
+        <div className="flex items-baseline justify-between border-b-2 border-black pb-1">
+          <h2 className="text-lg font-bold">Mapa de Férias — {year}</h2>
+          <span className="text-sm font-semibold">{companyName}</span>
+        </div>
       </div>
 
       {/* The map */}
@@ -418,7 +427,7 @@ export function MapaFerias({
           <span className="weekend-map-cell weekend-map-button relative inline-block h-3.5 w-3.5 overflow-hidden rounded-sm border border-slate-500" />
           Fim-de-semana
         </span>
-        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+        <span className="no-print inline-flex items-center gap-1.5 text-muted-foreground">
           <span className="today-map-button relative inline-block h-3.5 w-3.5 overflow-hidden rounded-sm border bg-background" />
           Hoje
         </span>

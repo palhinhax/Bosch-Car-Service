@@ -142,9 +142,34 @@
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    overflow: visible !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
   .print-break-avoid {
     break-inside: avoid;
+  }
+  /* Do not reveal "today" on a printed / shared map. */
+  .today-map-cell {
+    background-color: transparent !important;
+  }
+  .today-map-button::before {
+    display: none !important;
+  }
+  /* Crisp, document-style borders for the printed table. */
+  .print-full table {
+    min-width: 0 !important;
+    width: 100% !important;
+    border: 1px solid #111 !important;
+  }
+  .print-full th,
+  .print-full td {
+    border: 0.5px solid #666 !important;
+  }
+  .print-full thead th {
+    background: #e5e7eb !important;
+    color: #111 !important;
   }
   /* Force background colours (calendar bands) to render when printing */
   * {
