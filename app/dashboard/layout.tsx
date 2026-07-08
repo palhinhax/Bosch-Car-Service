@@ -14,14 +14,14 @@ export default function DashboardLayout({
 
   return (
     <SessionProvider>
-      <div className="min-h-screen">
-        <Navbar
-          showMenuButton
-          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-        />
-        <div className="flex">
-          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          <main className="flex-1 p-6">{children}</main>
+      <div className="flex min-h-screen bg-muted/30">
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Navbar
+            showMenuButton
+            onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+          />
+          <main className="min-w-0 flex-1 p-4 md:p-6">{children}</main>
         </div>
       </div>
     </SessionProvider>

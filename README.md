@@ -1,271 +1,129 @@
-# Next.js SaaS Template
+# Bosch Car Service Lousã — Gestão de Oficina
 
-A production-grade, full-stack SaaS template built with modern technologies.
+Plataforma interna de gestão da oficina que substitui o tradicional **Mapa de
+Férias** em papel por um sistema digital, e cresce para gerir disponibilidade da
+equipa, marcações, clientes, veículos e tarefas.
 
-## 🚀 Tech Stack
+Interface em **Português (Portugal)**. Design desktop-first, responsivo para
+tablet e telemóvel.
 
-- **Framework:** Next.js 14 (App Router) with TypeScript
-- **Database:** PostgreSQL with Prisma ORM
-- **Authentication:** Auth.js (NextAuth) with Credentials Provider
-- **State Management:** TanStack React Query
-- **UI Components:** shadcn/ui + Tailwind CSS
-- **Form Handling:** React Hook Form + Zod
-- **Testing:** Jest + React Testing Library + MSW
-- **Code Quality:** ESLint + Prettier + Husky
+## ✨ Funcionalidades
 
-## 📁 Project Structure
+### Mapa de Férias (funcionalidade principal)
 
-```
-├── app/                    # Next.js App Router
-│   ├── api/               # API Routes
-│   │   ├── auth/         # Auth endpoints
-│   │   └── posts/        # Posts CRUD API
-│   ├── auth/             # Auth pages (login, register)
-│   └── dashboard/        # Protected dashboard
-├── components/            # UI Components
-│   └── ui/               # shadcn/ui components
-├── features/             # Feature modules
-│   └── posts/            # Posts feature
-│       ├── api/          # API client functions
-│       ├── components/   # Feature components
-│       ├── hooks/        # React Query hooks
-│       └── schemas/      # Zod schemas
-├── lib/                  # Utilities
-│   ├── api/              # API client layer
-│   └── auth/             # Auth.js configuration
-├── prisma/               # Database schema & migrations
-└── tests/                # Test files
-    ├── mocks/            # MSW handlers
-    └── unit/             # Unit tests
-```
+- Vista anual (12 meses × 31 dias) tal como o mapa em papel.
+- Cada colaborador tem uma **cor única**; legenda sempre visível.
+- **Células divididas em bandas de cor** quando vários colaboradores estão de
+  férias no mesmo dia (ex.: 3 de Agosto mostra 3 bandas).
+- _Tooltip_ em cada dia com os nomes dos ausentes; clique abre o detalhe do dia.
+- Fins-de-semana sombreados e dias inválidos (30/31) assinalados.
+- Pedidos **pendentes** aparecem com tracejado; marcador vermelho nos dias de
+  conflito de equipa.
+- Filtros por colaborador e por mês; navegação por ano.
+- **Exportar Excel (CSV)** e **Imprimir** com layout tipo mapa de papel.
+- Regra de **equipa mínima** por dia com avisos de conflito.
 
-## 🏁 Getting Started
+### Restantes módulos
 
-### Prerequisites
+- **Pedidos de Férias** — submissão e fluxo de aprovação (aprovar/rejeitar) com
+  aviso quando um pedido deixa a equipa abaixo do mínimo.
+- **Colaboradores** — CRUD, cor no mapa, dias de férias usados/ano.
+- **Oficina / Agenda** — marcações por dia; impede atribuir um mecânico que
+  esteja de férias nessa data.
+- **Clientes** e **Veículos** — CRM simples com pesquisa por nome, telefone,
+  matrícula ou modelo.
+- **Tarefas** — quadro (To Do / Em curso / Concluída) com prioridade e ligação a
+  colaborador/veículo.
+- **Relatórios** — férias por colaborador, ausências por mês, marcações por
+  estado e conflitos de equipa; exportação CSV / impressão.
+- **Início (Dashboard)** — disponibilidade de hoje, próximas férias, marcações
+  do dia, pedidos pendentes, alertas e ações rápidas.
+- **Definições** — nome da oficina, ano do mapa, mínimo de equipa e perfis de
+  acesso.
 
-- Node.js 18+
-- pnpm
-- PostgreSQL database
+## 👥 Perfis de acesso
 
-### Installation
+| Perfil                     | Permissões                                                                  |
+| -------------------------- | --------------------------------------------------------------------------- |
+| **Administrador / Gestor** | Acesso total; gere equipa, aprova férias, relatórios.                       |
+| **Receção**                | Gere marcações, clientes e veículos; vê disponibilidade; não aprova férias. |
+| **Colaborador**            | Vê e submete as suas próprias férias; vê tarefas atribuídas.                |
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/next-prisma-saas-template.git
-   cd next-prisma-saas-template
-   ```
+## 🚀 Stack técnica
 
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
+- **Next.js 14** (App Router) + **TypeScript**
+- **PostgreSQL** (Neon) via **Prisma ORM**
+- **Auth.js (NextAuth)** com credenciais e permissões por perfil
+- **Server Actions** para mutações + **Server Components** para leitura
+- **Tailwind CSS** + componentes shadcn/ui
+- Identidade visual Bosch Car Service (vermelho / cinza / preto)
 
-3. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Update `.env` with your database URL and auth secret:
-   ```env
-   DATABASE_URL="postgresql://postgres:password@localhost:5432/saas_template"
-   AUTH_SECRET="your-secret-key-here"
-   ```
-
-4. Run database migrations:
-   ```bash
-   pnpm db:migrate
-   ```
-
-5. (Optional) Seed the database:
-   ```bash
-   pnpm db:seed
-   ```
-
-6. Start the development server:
-   ```bash
-   pnpm dev
-   ```
-
-Visit [http://localhost:3000](http://localhost:3000) to see the app.
-
-## 📜 Available Scripts
-
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start development server |
-| `pnpm build` | Build for production |
-| `pnpm start` | Start production server |
-| `pnpm lint` | Run ESLint |
-| `pnpm test` | Run tests |
-| `pnpm test:watch` | Run tests in watch mode |
-| `pnpm test:coverage` | Run tests with coverage |
-| `pnpm format` | Format code with Prettier |
-| `pnpm typecheck` | Run TypeScript type checking |
-| `pnpm db:migrate` | Run database migrations |
-| `pnpm db:seed` | Seed the database |
-| `pnpm db:studio` | Open Prisma Studio |
-
-## 🔐 Authentication
-
-The template uses Auth.js with a Credentials provider for email/password authentication.
-
-### Demo Credentials
-
-After seeding the database:
-- Email: `demo@example.com`
-- Password: `password123`
-
-### Protected Routes
-
-Routes under `/dashboard` are protected and require authentication. The middleware automatically redirects unauthenticated users to the login page.
-
-## 📝 API Endpoints
-
-### Posts API
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/posts` | List all posts | No |
-| GET | `/api/posts/:id` | Get a single post | No |
-| POST | `/api/posts` | Create a post | Yes |
-| PATCH | `/api/posts/:id` | Update a post | Yes (owner only) |
-| DELETE | `/api/posts/:id` | Delete a post | Yes (owner only) |
-
-### Example Usage
-
-```typescript
-// Using React Query hooks
-import { usePosts, useCreatePost } from "@/features/posts";
-
-function PostsList() {
-  const { data: posts, isLoading } = usePosts();
-  const createPost = useCreatePost();
-
-  const handleCreate = async () => {
-    await createPost.mutateAsync({
-      title: "New Post",
-      content: "Post content here",
-    });
-  };
-
-  // ...
-}
-```
-
-## 🧪 Testing
-
-The template includes Jest, React Testing Library, and MSW for testing.
-
-### Running Tests
+## 🏁 Começar
 
 ```bash
-# Run all tests
-pnpm test
+pnpm install
 
-# Run in watch mode
-pnpm test:watch
+# Variáveis de ambiente (ver .env.example)
+#   DATABASE_URL / DATABASE_URL_UNPOOLED (PostgreSQL / Neon)
+#   AUTH_SECRET
 
-# Run with coverage
-pnpm test:coverage
+pnpm db:push     # sincroniza o esquema com a base de dados
+pnpm db:seed     # dados de exemplo (colaboradores + férias do brief)
+pnpm dev         # http://localhost:3000
 ```
 
-### Test Structure
+> **Base de dados local sem servidor?** O esquema é portável. Para SQLite,
+> mude `provider = "sqlite"` em `prisma/schema.prisma` e
+> `DATABASE_URL="file:./dev.db"`. Todos os enums são guardados como texto, por
+> isso o esquema funciona igual em SQLite e PostgreSQL.
 
-- `tests/unit/` - Unit tests for components and hooks
-- `tests/mocks/` - MSW handlers for API mocking
+### Contas de demonstração (após o seed)
 
-## 🎨 UI Components
+| Perfil         | Email                    | Palavra-passe |
+| -------------- | ------------------------ | ------------- |
+| Gestor (Admin) | `gestor@bosch-lousa.pt`  | `bosch2026`   |
+| Receção        | `rececao@bosch-lousa.pt` | `bosch2026`   |
+| Colaborador    | `rodrigo@bosch-lousa.pt` | `bosch2026`   |
 
-The template includes these shadcn/ui components:
+## 📦 Modelo de dados
 
-- **Button** - Various button styles and sizes
-- **Input** - Text input with validation support
-- **Card** - Content container with header/footer
-- **Dialog** - Modal dialogs
-- **Label** - Form labels
-- **Spinner** - Loading indicator
-- **Toast** - Toast notifications
+`Employee`, `Vacation`, `Customer`, `Vehicle`, `Appointment`, `Task`,
+`WorkshopSettings`, `User` (com `role`). Ver [`prisma/schema.prisma`](prisma/schema.prisma).
 
-### Using Components
+## 📁 Estrutura
 
-```tsx
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-
-function Example() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>My Card</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Button>Click me</Button>
-      </CardContent>
-    </Card>
-  );
-}
+```
+app/
+  auth/login/            # início de sessão
+  dashboard/             # layout + páginas (ferias, pedidos, colaboradores, …)
+components/              # UI partilhada (shadcn/ui, brand, badges, stat-card)
+features/                # módulos (ferias, pedidos, colaboradores, oficina, …)
+lib/
+  actions.ts             # Server Actions (mutações, com verificação de perfil)
+  data.ts                # leituras (Server Components)
+  holidays.ts            # ocupação por dia, células divididas, conflitos
+  dates.ts               # utilitários de data (UTC, formatos PT)
+  constants.ts           # value-sets e etiquetas em Português
+  schemas.ts             # validação Zod
+prisma/                  # esquema + seed
 ```
 
-## 🔄 Form Validation
+## 📜 Scripts
 
-Forms use React Hook Form with Zod for end-to-end validation:
+| Comando          | Descrição                   |
+| ---------------- | --------------------------- |
+| `pnpm dev`       | Servidor de desenvolvimento |
+| `pnpm build`     | Build de produção           |
+| `pnpm db:push`   | Sincronizar esquema         |
+| `pnpm db:seed`   | Semear dados de exemplo     |
+| `pnpm db:studio` | Prisma Studio               |
+| `pnpm typecheck` | Verificação de tipos        |
+| `pnpm lint`      | ESLint                      |
 
-```typescript
-import { postSchema, type PostFormData } from "@/features/posts/schemas";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+## 🗺️ Próximos passos (preparado para SaaS)
 
-const form = useForm<PostFormData>({
-  resolver: zodResolver(postSchema),
-});
-```
-
-## 🌙 Dark Mode
-
-The template supports dark mode out of the box. Add the `dark` class to the `<html>` element to enable it.
-
-## 📦 Database Models
-
-### User
-```prisma
-model User {
-  id           String   @id @default(cuid())
-  name         String?
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
-  posts        Post[]
-}
-```
-
-### Post
-```prisma
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-```
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Import the project in Vercel
-3. Set environment variables:
-   - `DATABASE_URL`
-   - `AUTH_SECRET`
-4. Deploy!
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-Built with ❤️ using Next.js, Prisma, and shadcn/ui
+- Notificações reais de aprovação (email/push).
+- _Multi-tenant_ (várias oficinas) sobre `WorkshopSettings`.
+- Meio-dia de férias no cálculo de dias (o tipo já existe no modelo).
+- Upload de documentos/fotografias em veículos.
+- Exportação PDF nativa (para além de imprimir).

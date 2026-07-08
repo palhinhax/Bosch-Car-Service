@@ -1,30 +1,177 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Bosch Car Service Lousa — Gestão de Oficina
+// Prisma schema. Uses SQLite for zero-setup local development.
+//
+// To move to PostgreSQL (recommended for production / SaaS):
+//   1. datasource db { provider = "postgresql" }
+//   2. DATABASE_URL="postgresql://..." in .env
+// All value-sets (roles, statuses, types) are stored as strings so the
+// schema is 100% portable between SQLite and PostgreSQL. Allowed values are
+// centralised in lib/constants.ts and validated with Zod.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
+
+// ---------------------------------------------------------------------------
+// Auth / access control
+// ---------------------------------------------------------------------------
 
 model User {
   id           String   @id @default(cuid())
   name         String?
   email        String   @unique
   passwordHash String
+  role         String   @default("EMPLOYEE") // ADMIN | MANAGER | RECEPTION | EMPLOYEE
   createdAt    DateTime @default(now())
-  posts        Post[]
+
+  // A user account may be linked to an Employee record (self-service holidays)
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+  employeeId String?   @unique
+
+  approvedVacations Vacation[] @relation("ApprovedBy")
 }
 
-model Post {
+// ---------------------------------------------------------------------------
+// Core: Colaboradores (employees)
+// ---------------------------------------------------------------------------
+
+model Employee {
+  id                 String   @id @default(cuid())
+  name               String
+  jobRole            String   @default("Mecânico") // job title, e.g. Mecânico, Chefe de Oficina
+  department         String   @default("Oficina")
+  color              String   @default("#e2001a") // hex colour used across the Mapa de Férias
+  email              String?
+  phone              String?
+  active             Boolean  @default(true)
+  annualVacationDays Int      @default(22)
+  createdAt          DateTime @default(now())
+
+  user         User?
+  vacations    Vacation[]
+  appointments Appointment[]
+  tasks        Task[]
+}
+
+// ---------------------------------------------------------------------------
+// Core: Férias (vacations / absences)
+// ---------------------------------------------------------------------------
+
+model Vacation {
+  id         String   @id @default(cuid())
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+  startDate  DateTime // stored at midnight UTC (date only)
+  endDate    DateTime // inclusive
+  type       String   @default("FULL") // FULL | HALF_AM | HALF_PM
+  category   String   @default("FERIAS") // FERIAS | AUSENCIA | BAIXA | FORMACAO | FERIADO
+  status     String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  approvedBy   User?   @relation("ApprovedBy", fields: [approvedById], references: [id])
+  approvedById String?
+
+  @@index([employeeId])
+  @@index([startDate, endDate])
+}
+
+// ---------------------------------------------------------------------------
+// CRM: Clientes & Veículos
+// ---------------------------------------------------------------------------
+
+model Customer {
   id        String   @id @default(cuid())
-  title     String
-  content   String
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  vehicles     Vehicle[]
+  appointments Appointment[]
+}
+
+model Vehicle {
+  id          String   @id @default(cuid())
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId  String
+  plateNumber String
+  brand       String
+  model       String
+  year        Int?
+  mileage     Int?
+  vin         String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  appointments Appointment[]
+  tasks        Task[]
+
+  @@index([customerId])
+  @@index([plateNumber])
+}
+
+// ---------------------------------------------------------------------------
+// Oficina: Marcações (appointments)
+// ---------------------------------------------------------------------------
+
+model Appointment {
+  id                 String    @id @default(cuid())
+  customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId         String
+  vehicle            Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicleId          String
+  assignedEmployee   Employee? @relation(fields: [assignedEmployeeId], references: [id])
+  assignedEmployeeId String?
+  date               DateTime
+  startTime          String    @default("09:00") // HH:mm
+  endTime            String    @default("10:00")
+  serviceType        String    @default("GENERAL") // see SERVICE_TYPES
+  status             String    @default("BOOKED") // BOOKED | IN_PROGRESS | WAITING_PARTS | COMPLETED | CANCELLED
+  notes              String?
+  createdAt          DateTime  @default(now())
+
+  tasks Task[]
+
+  @@index([date])
+  @@index([assignedEmployeeId])
+}
+
+// ---------------------------------------------------------------------------
+// Tarefas internas
+// ---------------------------------------------------------------------------
+
+model Task {
+  id                 String       @id @default(cuid())
+  title              String
+  description        String?
+  assignedEmployee   Employee?    @relation(fields: [assignedEmployeeId], references: [id])
+  assignedEmployeeId String?
+  relatedVehicle     Vehicle?     @relation(fields: [relatedVehicleId], references: [id])
+  relatedVehicleId   String?
+  relatedAppointment Appointment? @relation(fields: [relatedAppointmentId], references: [id])
+  relatedAppointmentId String?
+  status             String       @default("TODO") // TODO | IN_PROGRESS | DONE
+  priority           String       @default("MEDIUM") // LOW | MEDIUM | HIGH
+  dueDate            DateTime?
+  createdAt          DateTime     @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Definições da oficina (single-row settings)
+// ---------------------------------------------------------------------------
+
+model WorkshopSettings {
+  id           String @id @default("default")
+  name         String @default("Bosch Car Service Lousa")
+  minStaffPerDay Int  @default(2) // minimum staff that must be present each working day
+  year         Int    @default(2026)
 }
