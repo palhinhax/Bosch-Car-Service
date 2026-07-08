@@ -70,7 +70,6 @@ function LoginContent() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) });
 
@@ -94,11 +93,6 @@ function LoginContent() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const fillDemo = () => {
-    setValue("email", "gestor@bosch-lousa.pt");
-    setValue("password", "bosch2026");
   };
 
   return (
@@ -128,7 +122,7 @@ function LoginContent() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="gestor@bosch-lousa.pt"
+                  placeholder="email@exemplo.pt"
                   {...register("email")}
                   aria-invalid={!!errors.email}
                 />
@@ -159,20 +153,9 @@ function LoginContent() {
                 {isLoading && <Spinner size="sm" className="mr-2" />}
                 Entrar
               </Button>
-              <button
-                type="button"
-                onClick={fillDemo}
-                className="text-xs text-muted-foreground underline-offset-2 hover:underline"
-              >
-                Preencher com credenciais de demonstração (Gestor)
-              </button>
             </CardFooter>
           </form>
         </Card>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Contas de teste — Gestor / Receção / Colaborador · palavra-passe{" "}
-          <code className="rounded bg-muted px-1">bosch2026</code>
-        </p>
       </div>
     </div>
   );

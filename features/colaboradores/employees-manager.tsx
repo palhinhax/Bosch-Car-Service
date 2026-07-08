@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ShieldCheck, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +25,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { EMPLOYEE_COLORS } from "@/lib/constants";
+import {
+  EMPLOYEE_COLORS,
+  ROLES,
+  ROLE_LABELS,
+  type Role,
+} from "@/lib/constants";
 import { createEmployee, updateEmployee, deleteEmployee } from "@/lib/actions";
 import type { EmployeeInput } from "@/lib/schemas";
 
@@ -35,38 +40,50 @@ export interface EmployeeRow {
   jobRole: string;
   department: string;
   color: string;
-  email: string | null;
+  email: string;
   phone: string | null;
   active: boolean;
   annualVacationDays: number;
-  role?: string;
+  role: string;
+  hasPassword: boolean;
   vacationDaysUsed?: number;
 }
 
-const empty: EmployeeInput = {
-  name: "",
-  jobRole: "Mecânico",
-  department: "Oficina",
-  color: EMPLOYEE_COLORS[5],
-  email: "",
-  phone: "",
-  active: true,
-  annualVacationDays: 22,
-  role: "EMPLOYEE",
-  password: "",
+const ROLE_PERMS: Record<Role, string> = {
+  ADMIN: "Acesso total, incluindo gerir perfis e palavras-passe.",
+  MANAGER: "Gere colaboradores e aprova férias.",
+  RECEPTION: "Gere marcações, clientes e veículos.",
+  EMPLOYEE: "Consulta e pede as suas férias.",
 };
 
 export function EmployeesManager({
   employees,
   canManage,
+  isAdmin,
+  currentUserId,
 }: {
   employees: EmployeeRow[];
   canManage: boolean;
+  isAdmin: boolean;
+  currentUserId: string;
 }) {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const empty: EmployeeInput = {
+    name: "",
+    jobRole: "Mecânico",
+    department: "Oficina",
+    color: EMPLOYEE_COLORS[5],
+    email: "",
+    phone: "",
+    active: true,
+    annualVacationDays: 22,
+    role: "EMPLOYEE",
+    password: "",
+  };
   const [form, setForm] = useState<EmployeeInput>(empty);
 
   const set = <K extends keyof EmployeeInput>(k: K, v: EmployeeInput[K]) =>
@@ -85,11 +102,11 @@ export function EmployeesManager({
       jobRole: e.jobRole,
       department: e.department,
       color: e.color,
-      email: e.email ?? "",
+      email: e.email,
       phone: e.phone ?? "",
       active: e.active,
       annualVacationDays: e.annualVacationDays,
-      role: (e.role as EmployeeInput["role"]) ?? "EMPLOYEE",
+      role: e.role as Role,
       password: "",
     });
     setOpen(true);
@@ -129,6 +146,15 @@ export function EmployeesManager({
     });
   };
 
+  const roleVariant = (role: string) =>
+    role === "ADMIN"
+      ? "danger"
+      : role === "MANAGER"
+        ? "info"
+        : role === "RECEPTION"
+          ? "warning"
+          : "neutral";
+
   return (
     <div className="space-y-4">
       {canManage && (
@@ -145,7 +171,8 @@ export function EmployeesManager({
             <TableRow>
               <TableHead>Colaborador</TableHead>
               <TableHead>Função</TableHead>
-              <TableHead>Contacto</TableHead>
+              <TableHead>Perfil</TableHead>
+              <TableHead className="text-center">Acesso</TableHead>
               <TableHead className="text-center">Férias (usadas/ano)</TableHead>
               <TableHead className="text-center">Estado</TableHead>
               {canManage && <TableHead className="text-right">Ações</TableHead>}
@@ -155,7 +182,7 @@ export function EmployeesManager({
             {employees.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="py-8 text-center text-muted-foreground"
                 >
                   Sem colaboradores. Adicione o primeiro.
@@ -170,7 +197,19 @@ export function EmployeesManager({
                       className="h-5 w-5 shrink-0 rounded-sm border"
                       style={{ backgroundColor: e.color }}
                     />
-                    <span className="font-medium">{e.name}</span>
+                    <div>
+                      <div className="font-medium">
+                        {e.name}
+                        {e.id === currentUserId && (
+                          <span className="ml-1.5 text-xs text-muted-foreground">
+                            (você)
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {e.email}
+                      </div>
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -179,13 +218,26 @@ export function EmployeesManager({
                     {e.department}
                   </div>
                 </TableCell>
-                <TableCell className="text-sm">
-                  {e.email && <div>{e.email}</div>}
-                  {e.phone && (
-                    <div className="text-muted-foreground">{e.phone}</div>
-                  )}
-                  {!e.email && !e.phone && (
-                    <span className="text-muted-foreground">—</span>
+                <TableCell>
+                  <Badge variant={roleVariant(e.role)}>
+                    {ROLE_LABELS[e.role as Role] ?? e.role}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-center">
+                  {e.hasPassword ? (
+                    <span
+                      className="inline-flex items-center gap-1 text-xs text-emerald-700"
+                      title="Login ativo"
+                    >
+                      <KeyRound className="h-3.5 w-3.5" /> Ativo
+                    </span>
+                  ) : (
+                    <span
+                      className="text-xs text-muted-foreground"
+                      title="Sem palavra-passe definida"
+                    >
+                      Sem acesso
+                    </span>
                   )}
                 </TableCell>
                 <TableCell className="text-center tabular-nums">
@@ -217,6 +269,12 @@ export function EmployeesManager({
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8 text-destructive"
+                        disabled={e.id === currentUserId}
+                        title={
+                          e.id === currentUserId
+                            ? "Não pode eliminar a sua conta"
+                            : "Eliminar"
+                        }
                         onClick={() => remove(e.id, e.name)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -231,13 +289,13 @@ export function EmployeesManager({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingId ? "Editar colaborador" : "Novo colaborador"}
             </DialogTitle>
             <DialogDescription>
-              A cor é usada para identificar o colaborador no Mapa de Férias.
+              Cada colaborador é também um utilizador da plataforma.
             </DialogDescription>
           </DialogHeader>
 
@@ -294,10 +352,10 @@ export function EmployeesManager({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label>Email</Label>
+                <Label>Email (login)</Label>
                 <Input
                   type="email"
-                  value={form.email ?? ""}
+                  value={form.email}
                   onChange={(e) => set("email", e.target.value)}
                 />
               </div>
@@ -332,6 +390,51 @@ export function EmployeesManager({
                 </Select>
               </div>
             </div>
+
+            {/* Access control — administrator only */}
+            {isAdmin ? (
+              <div className="grid gap-4 rounded-md border border-dashed p-3">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <ShieldCheck className="h-4 w-4" /> Acesso e permissões
+                </p>
+                <div className="grid gap-2">
+                  <Label>Perfil</Label>
+                  <Select
+                    value={form.role}
+                    onChange={(e) => set("role", e.target.value as Role)}
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r} value={r}>
+                        {ROLE_LABELS[r]}
+                      </option>
+                    ))}
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {ROLE_PERMS[form.role as Role]}
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <Label>
+                    {editingId ? "Repor palavra-passe" : "Palavra-passe"}
+                  </Label>
+                  <Input
+                    type="password"
+                    value={form.password ?? ""}
+                    onChange={(e) => set("password", e.target.value)}
+                    placeholder={
+                      editingId
+                        ? "Deixe vazio para manter a atual"
+                        : "Mínimo 6 caracteres (vazio = sem login)"
+                    }
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
+                Apenas um Administrador pode alterar o perfil ou a
+                palavra-passe.
+              </p>
+            )}
           </div>
 
           <DialogFooter>

@@ -14,6 +14,7 @@ export default async function ColaboradoresPage() {
     listVacations(settings.year),
   ]);
   const canManage = roleCanApprove(user?.role);
+  const isAdmin = user?.role === "ADMIN";
 
   // Approved FÉRIAS working days used this year, per employee.
   const yearStart = utcDate(settings.year, 0, 1);
@@ -38,6 +39,8 @@ export default async function ColaboradoresPage() {
       />
       <EmployeesManager
         canManage={canManage}
+        isAdmin={isAdmin}
+        currentUserId={user?.id ?? ""}
         employees={employees.map((e) => ({
           id: e.id,
           name: e.name,
@@ -48,6 +51,8 @@ export default async function ColaboradoresPage() {
           phone: e.phone,
           active: e.active,
           annualVacationDays: e.annualVacationDays,
+          role: e.role,
+          hasPassword: !!e.passwordHash,
           vacationDaysUsed: used[e.id] ?? 0,
         }))}
       />
