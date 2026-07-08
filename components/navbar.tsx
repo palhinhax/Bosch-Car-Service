@@ -16,7 +16,7 @@ export function Navbar({ onMenuClick, showMenuButton }: NavbarProps) {
   const role = (session?.user?.role as Role) ?? "EMPLOYEE";
 
   return (
-    <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
+    <header className="no-print sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
       <div className="flex h-16 items-center px-4 md:px-6">
         {showMenuButton && (
           <Button

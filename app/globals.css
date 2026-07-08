@@ -83,6 +83,17 @@
   .weekend-map-cell {
     background-color: rgb(203 213 225);
   }
+  /* A day that does not exist in this month (e.g. 30 Fev). Clearly blocked. */
+  .nonday-cell {
+    background-color: rgb(148 163 184); /* slate-400 */
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(30, 41, 59, 0.45) 0,
+      rgba(30, 41, 59, 0.45) 2px,
+      transparent 2px,
+      transparent 5px
+    );
+  }
   .weekend-map-button::after {
     content: "";
     position: absolute;
@@ -96,6 +107,21 @@
       transparent 7px
     );
     box-shadow: inset 0 0 0 1px rgba(51, 65, 85, 0.32);
+  }
+  .today-map-cell {
+    background-color: hsl(var(--primary) / 0.08);
+  }
+  .today-map-button::before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    z-index: 3;
+    pointer-events: none;
+    border: 2px solid hsl(var(--primary));
+    border-radius: 2px;
+    box-shadow:
+      0 0 0 1px hsl(var(--background) / 0.95),
+      inset 0 0 0 1px hsl(var(--background) / 0.9);
   }
 }
 

@@ -106,6 +106,13 @@ export function MapaFerias({
     () => new Set(conflicts.map((c) => c.dateKey)),
     [conflicts]
   );
+  const todayKey = useMemo(() => {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, "0");
+    const d = String(today.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }, []);
 
   const monthsToRender =
     monthFilter === "" ? MONTHS_PT.map((_, i) => i) : [Number(monthFilter)];
@@ -287,16 +294,22 @@ export function MapaFerias({
 
       {/* The map */}
       <div className="print-full overflow-x-auto rounded-lg border bg-card">
-        <table className="w-full border-collapse text-xs">
+        <table className="w-full min-w-[820px] table-fixed border-collapse text-xs">
+          <colgroup>
+            <col className="w-24" />
+            {Array.from({ length: 31 }, (_, i) => (
+              <col key={i} />
+            ))}
+          </colgroup>
           <thead>
             <tr className="bg-muted/60">
               <th className="sticky left-0 z-10 border-b border-r bg-muted/60 px-2 py-2 text-left font-semibold">
-                Colaboradores
+                Mês
               </th>
               {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
                 <th
                   key={d}
-                  className="w-7 border-b border-l px-0 py-1 text-center font-semibold tabular-nums text-muted-foreground"
+                  className="border-b border-l px-0 py-1 text-center font-semibold tabular-nums text-muted-foreground"
                 >
                   {d}
                 </th>
@@ -308,15 +321,16 @@ export function MapaFerias({
               const dim = daysInMonth(year, m);
               return (
                 <tr key={m} className="print-break-avoid">
-                  <th className="sticky left-0 z-10 border-b border-r bg-card px-2 py-1.5 text-left font-semibold">
+                  <th className="sticky left-0 z-10 whitespace-nowrap border-b border-r bg-card px-2 py-1.5 text-left font-semibold">
                     {MONTHS_PT[m]}
                   </th>
                   {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => {
                     if (d > dim) {
+                      // This day does not exist in this month (e.g. 30 Fev).
                       return (
                         <td
                           key={d}
-                          className="border-b border-l bg-muted/40"
+                          className="nonday-cell border-b border-l"
                           aria-hidden
                         />
                       );
@@ -326,6 +340,7 @@ export function MapaFerias({
                     const segs = occupancy.get(key) ?? [];
                     const weekend = isWeekend(date);
                     const conflict = conflictKeys.has(key);
+                    const today = key === todayKey;
                     const names = segs
                       .map(
                         (s) =>
@@ -337,10 +352,12 @@ export function MapaFerias({
                     const weekendButtonClass = weekend
                       ? "weekend-map-button"
                       : "";
+                    const todayCellClass = today ? "today-map-cell" : "";
+                    const todayButtonClass = today ? "today-map-button" : "";
                     return (
                       <td
                         key={d}
-                        className={`h-7 border-b border-l p-0 ${weekendCellClass}`}
+                        className={`h-7 border-b border-l p-0 ${weekendCellClass} ${todayCellClass}`}
                       >
                         <button
                           type="button"
@@ -350,7 +367,7 @@ export function MapaFerias({
                               ? `${formatDatePT(date)} — ${names}`
                               : `${formatDatePT(date)} (${wd})`
                           }
-                          className={`relative flex h-7 w-full flex-col overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-ring ${weekendButtonClass}`}
+                          className={`relative flex h-7 w-full flex-col overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-ring ${weekendButtonClass} ${todayButtonClass}`}
                         >
                           {segs.length === 0 ? (
                             <span className="sr-only">
@@ -400,6 +417,10 @@ export function MapaFerias({
         <span className="inline-flex items-center gap-1.5 text-muted-foreground">
           <span className="weekend-map-cell weekend-map-button relative inline-block h-3.5 w-3.5 overflow-hidden rounded-sm border border-slate-500" />
           Fim-de-semana
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+          <span className="today-map-button relative inline-block h-3.5 w-3.5 overflow-hidden rounded-sm border bg-background" />
+          Hoje
         </span>
       </div>
 
