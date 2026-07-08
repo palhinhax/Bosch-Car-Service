@@ -23,6 +23,7 @@ export function DashboardShell({
           <Navbar
             showMenuButton
             onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+            user={session.user}
           />
           <main className="min-w-0 flex-1 p-4 md:p-6">{children}</main>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Menu, LogOut, User } from "lucide-react";
@@ -9,11 +9,29 @@ import { ROLE_LABELS, type Role } from "@/lib/constants";
 interface NavbarProps {
   onMenuClick?: () => void;
   showMenuButton?: boolean;
+  // Provided by the server (DashboardShell) so the header never depends on the
+  // client session hydrating — it always shows the user + logout in production.
+  user?: {
+    name?: string | null;
+    email?: string | null;
+    role?: string | null;
+  } | null;
 }
 
-export function Navbar({ onMenuClick, showMenuButton }: NavbarProps) {
-  const { data: session } = useSession();
-  const role = (session?.user?.role as Role) ?? "EMPLOYEE";
+export function Navbar({ onMenuClick, showMenuButton, user }: NavbarProps) {
+  const role = (user?.role as Role) ?? "EMPLOYEE";
+
+  // next-auth v5 beta's client signOut redirect can fail silently (if the
+  // signout fetch/JSON parsing throws, the internal window.location redirect
+  // never runs and nothing happens). Clear the session, then navigate
+  // explicitly so logout always lands on the login page.
+  const handleSignOut = async () => {
+    try {
+      await signOut({ redirect: false });
+    } finally {
+      window.location.href = "/auth/login";
+    }
+  };
 
   return (
     <header className="no-print sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
@@ -34,20 +52,16 @@ export function Navbar({ onMenuClick, showMenuButton }: NavbarProps) {
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          {session && (
+          {user && (
             <>
               <div className="hidden items-center gap-2 sm:flex">
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">
-                  {session.user?.name || session.user?.email}
+                  {user.name || user.email}
                 </span>
-                <Badge variant="neutral">{ROLE_LABELS[role]}</Badge>
+                <Badge variant="neutral">{ROLE_LABELS[role] ?? role}</Badge>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => signOut({ callbackUrl: "/auth/login" })}
-              >
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Sair
               </Button>
