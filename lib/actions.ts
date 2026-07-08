@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { putObject, deleteObject } from "@/lib/storage";
 import { getCurrentUser } from "@/lib/auth/session";
 import { roleCanApprove, roleCanManageFrontDesk } from "@/lib/auth/session";
 import { parseDateKey } from "@/lib/dates";
@@ -236,6 +238,87 @@ export async function updateMyProfile(
         emergencyContactPhone: data.emergencyContactPhone?.trim() || null,
       },
     });
+    revalidateAll();
+    return ok;
+  } catch (e) {
+    return fail((e as Error).message);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Foto de perfil (Backblaze B2). Self-service: cada colaborador gere a sua.
+// ---------------------------------------------------------------------------
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+const AVATAR_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+export async function uploadMyAvatar(
+  formData: FormData
+): Promise<ActionResult> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return fail("Sessão inválida.");
+
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return fail("Nenhum ficheiro selecionado.");
+    }
+    const ext = AVATAR_TYPES[file.type];
+    if (!ext) return fail("Formato inválido. Use JPG, PNG ou WebP.");
+    if (file.size > AVATAR_MAX_BYTES) {
+      return fail("A imagem é demasiado grande (máximo 5 MB).");
+    }
+
+    // Random suffix so the object key changes on every upload — this doubles as
+    // a cache-buster for the <img> URL and lets us delete the previous file.
+    const key = `avatars/${user.id}-${randomUUID()}.${ext}`;
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    await putObject(key, bytes, file.type);
+
+    const me = await prisma.employee.findUnique({
+      where: { id: user.id },
+      select: { avatarKey: true },
+    });
+    await prisma.employee.update({
+      where: { id: user.id },
+      data: { avatarKey: key },
+    });
+    if (me?.avatarKey && me.avatarKey !== key) {
+      try {
+        await deleteObject(me.avatarKey);
+      } catch {
+        // Orphaned object is harmless — ignore cleanup failures.
+      }
+    }
+    revalidateAll();
+    return ok;
+  } catch (e) {
+    return fail((e as Error).message);
+  }
+}
+
+export async function removeMyAvatar(): Promise<ActionResult> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return fail("Sessão inválida.");
+    const me = await prisma.employee.findUnique({
+      where: { id: user.id },
+      select: { avatarKey: true },
+    });
+    await prisma.employee.update({
+      where: { id: user.id },
+      data: { avatarKey: null },
+    });
+    if (me?.avatarKey) {
+      try {
+        await deleteObject(me.avatarKey);
+      } catch {
+        // ignore
+      }
+    }
     revalidateAll();
     return ok;
   } catch (e) {

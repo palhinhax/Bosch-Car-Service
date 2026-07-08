@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
+import { EmployeeAvatar } from "@/components/employee-avatar";
 import { VacationStatusBadge } from "@/components/status-badge";
 import { VacationFormDialog } from "@/features/ferias/vacation-form";
 import {
@@ -26,6 +27,7 @@ import { setVacationStatus, deleteVacation } from "@/lib/actions";
 export function PedidosManager({
   vacations,
   employees,
+  avatarById,
   canApprove,
   minStaffPerDay,
   totalActive,
@@ -33,6 +35,7 @@ export function PedidosManager({
 }: {
   vacations: VacationLike[];
   employees: { id: string; name: string }[];
+  avatarById?: Record<string, string | null>;
   canApprove: boolean;
   minStaffPerDay: number;
   totalActive: number;
@@ -146,9 +149,12 @@ export function PedidosManager({
                 <TableRow key={v.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <span
-                        className="h-4 w-4 shrink-0 rounded-sm border"
-                        style={{ backgroundColor: v.employee.color }}
+                      <EmployeeAvatar
+                        id={v.employee.id}
+                        name={v.employee.name}
+                        color={v.employee.color}
+                        avatarKey={avatarById?.[v.employeeId]}
+                        size={28}
                       />
                       <span className="font-medium">{v.employee.name}</span>
                     </div>

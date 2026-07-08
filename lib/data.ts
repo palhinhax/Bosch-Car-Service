@@ -22,6 +22,10 @@ export function getMyProfile(id: string) {
   return prisma.employee.findUnique({
     where: { id },
     select: {
+      id: true,
+      name: true,
+      color: true,
+      avatarKey: true,
       phone: true,
       personalEmail: true,
       address: true,

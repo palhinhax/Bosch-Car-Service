@@ -11,6 +11,7 @@ import {
   Contact,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { EmployeeAvatar } from "@/components/employee-avatar";
 import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,6 +57,7 @@ export default async function DashboardPage() {
     ]);
 
   const vacations = vacationsRaw as unknown as VacationLike[];
+  const avatarById = new Map(employees.map((e) => [e.id, e.avatarKey]));
   const today = toUtcMidnight(new Date());
   const todayKey = dateKey(today);
 
@@ -185,9 +187,12 @@ export default async function DashboardPage() {
                 <div className="space-y-1.5">
                   {workingToday.map((e) => (
                     <div key={e.id} className="flex items-center gap-2 text-sm">
-                      <span
-                        className="h-3 w-3 rounded-sm border"
-                        style={{ backgroundColor: e.color }}
+                      <EmployeeAvatar
+                        id={e.id}
+                        name={e.name}
+                        color={e.color}
+                        avatarKey={e.avatarKey}
+                        size={24}
                       />
                       {e.name}
                     </div>
@@ -209,9 +214,12 @@ export default async function DashboardPage() {
                       key={s.vacationId}
                       className="flex items-center gap-2 text-sm"
                     >
-                      <span
-                        className="h-3 w-3 rounded-sm border"
-                        style={{ backgroundColor: s.color }}
+                      <EmployeeAvatar
+                        id={s.employeeId}
+                        name={s.name}
+                        color={s.color}
+                        avatarKey={avatarById.get(s.employeeId)}
+                        size={24}
                       />
                       <span>{s.name}</span>
                       <Badge variant="neutral" className="ml-auto">
@@ -248,9 +256,12 @@ export default async function DashboardPage() {
               {upcoming.map((v) => (
                 <div key={v.id} className="flex items-center gap-2 text-sm">
                   <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                  <span
-                    className="h-3 w-3 rounded-sm border"
-                    style={{ backgroundColor: v.employee.color }}
+                  <EmployeeAvatar
+                    id={v.employee.id}
+                    name={v.employee.name}
+                    color={v.employee.color}
+                    avatarKey={avatarById.get(v.employee.id)}
+                    size={22}
                   />
                   <span className="font-medium">{v.employee.name}</span>
                   <span className="ml-auto text-muted-foreground">

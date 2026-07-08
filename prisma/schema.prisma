@@ -32,6 +32,7 @@ model Employee {
   annualVacationDays Int      @default(22)
 
   // Personal profile — self-service: each colaborador edits their own fields.
+  avatarKey                String? // object key in the B2 bucket (null = no photo)
   personalEmail            String?
   address                  String?
   birthDate                DateTime? // date only (stored at 00:00 UTC)

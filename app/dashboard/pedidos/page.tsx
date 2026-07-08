@@ -49,6 +49,9 @@ export default async function PedidosPage() {
       <PedidosManager
         vacations={vacations}
         employees={employees.map((e) => ({ id: e.id, name: e.name }))}
+        avatarById={Object.fromEntries(
+          employees.map((e) => [e.id, e.avatarKey])
+        )}
         canApprove={canApprove}
         minStaffPerDay={settings.minStaffPerDay}
         totalActive={totalActive}
