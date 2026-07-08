@@ -70,7 +70,7 @@ export function AvatarUploader({
         name={employee.name}
         color={employee.color}
         avatarKey={avatarKey}
-        size={64}
+        size={100}
       />
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap gap-2">

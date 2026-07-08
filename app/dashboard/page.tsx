@@ -192,7 +192,7 @@ export default async function DashboardPage() {
                         name={e.name}
                         color={e.color}
                         avatarKey={e.avatarKey}
-                        size={24}
+                        size={32}
                       />
                       {e.name}
                     </div>
@@ -219,7 +219,7 @@ export default async function DashboardPage() {
                         name={s.name}
                         color={s.color}
                         avatarKey={avatarById.get(s.employeeId)}
-                        size={24}
+                        size={32}
                       />
                       <span>{s.name}</span>
                       <Badge variant="neutral" className="ml-auto">
@@ -261,7 +261,7 @@ export default async function DashboardPage() {
                     name={v.employee.name}
                     color={v.employee.color}
                     avatarKey={avatarById.get(v.employee.id)}
-                    size={22}
+                    size={28}
                   />
                   <span className="font-medium">{v.employee.name}</span>
                   <span className="ml-auto text-muted-foreground">

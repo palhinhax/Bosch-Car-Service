@@ -6,10 +6,13 @@ interface EmployeeAvatarProps {
   color: string;
   /** Object key of the photo, or null/undefined when none exists. */
   avatarKey?: string | null;
-  /** Diameter in pixels. */
+  /** Diameter in pixels. Clamped to a MIN_AVATAR_SIZE floor so faces stay legible. */
   size?: number;
   className?: string;
 }
+
+/** Avatars never render smaller than this so the photo is always recognisable. */
+const MIN_AVATAR_SIZE = 50;
 
 /**
  * Round avatar for a colaborador. Renders the profile photo (streamed through
@@ -25,7 +28,8 @@ export function EmployeeAvatar({
   size = 24,
   className,
 }: EmployeeAvatarProps) {
-  const dimensions = { width: size, height: size };
+  const px = Math.max(size, MIN_AVATAR_SIZE);
+  const dimensions = { width: px, height: px };
   const base = cn("shrink-0 rounded-full border", className);
 
   if (avatarKey) {
@@ -34,8 +38,8 @@ export function EmployeeAvatar({
       <img
         src={`/api/avatar/${id}?v=${encodeURIComponent(avatarKey)}`}
         alt={name}
-        width={size}
-        height={size}
+        width={px}
+        height={px}
         style={dimensions}
         className={cn(base, "object-cover")}
       />
@@ -52,7 +56,7 @@ export function EmployeeAvatar({
       )}
       aria-label={name}
     >
-      <span style={{ fontSize: Math.round(size * 0.45) }}>{initial}</span>
+      <span style={{ fontSize: Math.round(px * 0.45) }}>{initial}</span>
     </span>
   );
 }

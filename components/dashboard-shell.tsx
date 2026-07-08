@@ -9,9 +9,11 @@ import { Sidebar } from "@/components/sidebar";
 export function DashboardShell({
   children,
   session,
+  avatarKey,
 }: {
   children: React.ReactNode;
   session: Session;
+  avatarKey?: string | null;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -24,6 +26,7 @@ export function DashboardShell({
             showMenuButton
             onMenuClick={() => setSidebarOpen(!sidebarOpen)}
             user={session.user}
+            avatarKey={avatarKey}
           />
           <main className="min-w-0 flex-1 p-4 md:p-6">{children}</main>
         </div>
