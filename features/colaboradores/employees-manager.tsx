@@ -39,6 +39,7 @@ export interface EmployeeRow {
   phone: string | null;
   active: boolean;
   annualVacationDays: number;
+  role?: string;
   vacationDaysUsed?: number;
 }
 
@@ -51,6 +52,8 @@ const empty: EmployeeInput = {
   phone: "",
   active: true,
   annualVacationDays: 22,
+  role: "EMPLOYEE",
+  password: "",
 };
 
 export function EmployeesManager({
@@ -86,6 +89,8 @@ export function EmployeesManager({
       phone: e.phone ?? "",
       active: e.active,
       annualVacationDays: e.annualVacationDays,
+      role: (e.role as EmployeeInput["role"]) ?? "EMPLOYEE",
+      password: "",
     });
     setOpen(true);
   };

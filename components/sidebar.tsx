@@ -15,7 +15,6 @@ import {
   ListChecks,
   BarChart3,
   Settings,
-  ShieldCheck,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -67,12 +66,6 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: "Gestão",
     items: [
       { title: "Relatórios", href: "/dashboard/relatorios", icon: BarChart3 },
-      {
-        title: "Utilizadores",
-        href: "/dashboard/utilizadores",
-        icon: ShieldCheck,
-        adminOnly: true,
-      },
       { title: "Definições", href: "/dashboard/definicoes", icon: Settings },
     ],
   },

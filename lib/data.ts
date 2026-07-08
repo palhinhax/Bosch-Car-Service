@@ -22,7 +22,6 @@ export function getEmployee(id: string) {
     where: { id },
     include: {
       vacations: { orderBy: { startDate: "asc" } },
-      user: true,
     },
   });
 }
@@ -90,32 +89,6 @@ export function listAppointments(range?: { from: Date; to: Date }) {
       assignedEmployee: { select: { id: true, name: true, color: true } },
     },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
-  });
-}
-
-export function listUsers() {
-  return prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-      employee: { select: { id: true, name: true, color: true } },
-    },
-    orderBy: { createdAt: "asc" },
-  });
-}
-
-/** Employees with whether they already have a linked user account. */
-export function listEmployeesWithUser() {
-  return prisma.employee.findMany({
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      user: { select: { id: true } },
-    },
   });
 }
 

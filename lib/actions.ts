@@ -70,7 +70,10 @@ function num(v: unknown): number | null {
 // ---------------------------------------------------------------------------
 function friendlyEmployeeError(e: unknown): string {
   const msg = (e as Error).message;
-  if (msg.includes("Unique constraint") && msg.toLowerCase().includes("email")) {
+  if (
+    msg.includes("Unique constraint") &&
+    msg.toLowerCase().includes("email")
+  ) {
     return "Já existe um colaborador com esse email.";
   }
   return msg;
@@ -611,106 +614,4 @@ export async function updateSettings(
   } catch (e) {
     return fail((e as Error).message);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Utilizadores / perfis (apenas Administrador)
-// ---------------------------------------------------------------------------
-async function countAdmins(excludeId?: string): Promise<number> {
-  return prisma.user.count({
-    where: { role: "ADMIN", ...(excludeId ? { id: { not: excludeId } } : {}) },
-  });
-}
-
-export async function createUser(input: UserInput): Promise<ActionResult> {
-  try {
-    await requireAdmin();
-    const data = userSchema.parse(input);
-    if (!data.password || data.password.length < 6) {
-      return fail("Defina uma palavra-passe (mínimo 6 caracteres).");
-    }
-    const existing = await prisma.user.findUnique({
-      where: { email: data.email },
-    });
-    if (existing) return fail("Já existe um utilizador com esse email.");
-
-    await prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        role: data.role,
-        passwordHash: await bcrypt.hash(data.password, 12),
-        employeeId: data.employeeId || null,
-      },
-    });
-    revalidateAll();
-    return ok;
-  } catch (e) {
-    return fail(friendlyUserError(e));
-  }
-}
-
-export async function updateUser(
-  id: string,
-  input: UserInput
-): Promise<ActionResult> {
-  try {
-    await requireAdmin();
-    const data = userSchema.parse(input);
-
-    // Never leave the workshop without an administrator.
-    if (data.role !== "ADMIN") {
-      const target = await prisma.user.findUnique({ where: { id } });
-      if (target?.role === "ADMIN" && (await countAdmins(id)) === 0) {
-        return fail("Tem de existir pelo menos um Administrador.");
-      }
-    }
-
-    await prisma.user.update({
-      where: { id },
-      data: {
-        name: data.name,
-        email: data.email,
-        role: data.role,
-        employeeId: data.employeeId || null,
-        // Only rotate the password when a new one is supplied.
-        ...(data.password && data.password.length >= 6
-          ? { passwordHash: await bcrypt.hash(data.password, 12) }
-          : {}),
-      },
-    });
-    revalidateAll();
-    return ok;
-  } catch (e) {
-    return fail(friendlyUserError(e));
-  }
-}
-
-export async function deleteUser(id: string): Promise<ActionResult> {
-  try {
-    const admin = await requireAdmin();
-    if (admin.id === id) return fail("Não pode eliminar a sua própria conta.");
-    const target = await prisma.user.findUnique({ where: { id } });
-    if (!target) return fail("Utilizador não encontrado.");
-    if (target.role === "ADMIN" && (await countAdmins(id)) === 0) {
-      return fail("Tem de existir pelo menos um Administrador.");
-    }
-    await prisma.user.delete({ where: { id } });
-    revalidateAll();
-    return ok;
-  } catch (e) {
-    return fail(friendlyUserError(e));
-  }
-}
-
-function friendlyUserError(e: unknown): string {
-  const msg = (e as Error).message;
-  // Prisma unique-constraint on the 1-to-1 employee link.
-  if (msg.includes("Unique constraint") && msg.includes("employeeId")) {
-    return "Esse colaborador já está associado a outro utilizador.";
-  }
-  if (msg.includes("Unique constraint") && msg.includes("email")) {
-    return "Já existe um utilizador com esse email.";
-  }
-  return msg;
 }
