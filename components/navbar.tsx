@@ -47,8 +47,8 @@ export function Navbar({ onMenuClick, showMenuButton, user }: NavbarProps) {
           </Button>
         )}
 
-        <div className="hidden text-sm text-muted-foreground sm:block">
-          Bosch Car Service Lousa
+        <div className="hidden sm:block">
+          <span className="bosch-brand text-sm">Bosch Car Service Lousa</span>
         </div>
 
         <div className="ml-auto flex items-center gap-3">

@@ -70,6 +70,35 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Brand title: subtle gradient that drifts only between Bosch red and blue */
+  @keyframes bosch-gradient-flow {
+    to {
+      background-position: -200% center;
+    }
+  }
+  .bosch-brand {
+    display: inline-block;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--bosch-red)) 0%,
+      hsl(var(--bosch-blue)) 50%,
+      hsl(var(--bosch-red)) 100%
+    );
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: bosch-gradient-flow 7s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bosch-brand {
+      animation: none;
+    }
+  }
   /* Diagonal hatch overlay used to mark PENDING vacation days on the map */
   .hatch-pending {
     background-image: repeating-linear-gradient(
