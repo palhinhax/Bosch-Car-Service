@@ -1,4 +1,4 @@
-# Bosch Car Service Lousã — Gestão de Oficina
+# Bosch Car Service Lousa — Gestão de Oficina
 
 Plataforma interna de gestão da oficina que substitui o tradicional **Mapa de
 Férias** em papel por um sistema digital, e cresce para gerir disponibilidade da

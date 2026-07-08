@@ -21,10 +21,19 @@ export const employeeSchema = z.object({
   jobRole: z.string().min(1, "Função obrigatória").default("Mecânico"),
   department: z.string().min(1).default("Oficina"),
   color: hex,
-  email: z.string().email("Email inválido").or(z.literal("")).optional(),
+  // Email is the login identifier — required and unique.
+  email: z.string().email("Email inválido"),
   phone: z.string().optional(),
   active: z.boolean().default(true),
   annualVacationDays: z.coerce.number().int().min(0).max(60).default(22),
+  // Access control — only an ADMIN may change these.
+  role: z.enum(ROLES).default("EMPLOYEE"),
+  // Set/reset password. Empty string = leave unchanged (on edit).
+  password: z
+    .string()
+    .min(6, "Mínimo 6 caracteres")
+    .or(z.literal(""))
+    .optional(),
 });
 export type EmployeeInput = z.infer<typeof employeeSchema>;
 
@@ -102,12 +111,3 @@ export const settingsSchema = z.object({
   year: z.coerce.number().int().min(2020).max(2100),
 });
 export type SettingsInput = z.infer<typeof settingsSchema>;
-
-export const userSchema = z.object({
-  name: z.string().min(2, "Nome obrigatório"),
-  email: z.string().email("Email inválido"),
-  role: z.enum(ROLES).default("EMPLOYEE"),
-  password: z.string().min(6, "Mínimo 6 caracteres").optional(),
-  employeeId: z.string().optional(),
-});
-export type UserInput = z.infer<typeof userSchema>;

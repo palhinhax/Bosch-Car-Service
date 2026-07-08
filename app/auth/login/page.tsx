@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -28,6 +28,39 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginShell />}>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginShell() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
+      <div className="w-full max-w-md">
+        <div className="mb-6 flex justify-center">
+          <BrandMark />
+        </div>
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-center text-2xl font-bold">
+              Iniciar sessão
+            </CardTitle>
+            <CardDescription className="text-center">
+              Aceda à plataforma de gestão da oficina
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center py-10">
+            <Spinner />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "/dashboard";

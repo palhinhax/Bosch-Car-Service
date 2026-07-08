@@ -15,13 +15,11 @@ import {
   taskSchema,
   vacationSchema,
   vehicleSchema,
-  userSchema,
   type AppointmentInput,
   type CustomerInput,
   type EmployeeInput,
   type SettingsInput,
   type TaskInput,
-  type UserInput,
   type VacationInput,
   type VehicleInput,
 } from "@/lib/schemas";
@@ -67,21 +65,53 @@ function num(v: unknown): number | null {
 }
 
 // ---------------------------------------------------------------------------
-// Colaboradores
+// Colaboradores (== utilizadores)
+// Basic fields: Gestor/Admin. Role + password: Admin only.
 // ---------------------------------------------------------------------------
+function friendlyEmployeeError(e: unknown): string {
+  const msg = (e as Error).message;
+  if (msg.includes("Unique constraint") && msg.toLowerCase().includes("email")) {
+    return "Já existe um colaborador com esse email.";
+  }
+  return msg;
+}
+
+async function countAdmins(excludeId?: string): Promise<number> {
+  return prisma.employee.count({
+    where: { role: "ADMIN", ...(excludeId ? { id: { not: excludeId } } : {}) },
+  });
+}
+
 export async function createEmployee(
   input: EmployeeInput
 ): Promise<ActionResult> {
   try {
-    await requireManager();
+    const actor = await requireManager();
     const data = employeeSchema.parse(input);
+    const isAdmin = actor.role === "ADMIN";
+
     await prisma.employee.create({
-      data: { ...data, email: data.email || null },
+      data: {
+        name: data.name,
+        jobRole: data.jobRole,
+        department: data.department,
+        color: data.color,
+        email: data.email,
+        phone: data.phone || null,
+        active: data.active,
+        annualVacationDays: data.annualVacationDays,
+        // Only an admin may grant a privileged role or set a password.
+        role: isAdmin ? data.role : "EMPLOYEE",
+        passwordHash:
+          isAdmin && data.password
+            ? await bcrypt.hash(data.password, 12)
+            : null,
+      },
     });
     revalidateAll();
     return ok;
   } catch (e) {
-    return fail((e as Error).message);
+    return fail(friendlyEmployeeError(e));
   }
 }
 
@@ -90,11 +120,56 @@ export async function updateEmployee(
   input: EmployeeInput
 ): Promise<ActionResult> {
   try {
-    await requireManager();
+    const actor = await requireManager();
     const data = employeeSchema.parse(input);
+    const isAdmin = actor.role === "ADMIN";
+
+    // Guard: never demote the last remaining administrator.
+    if (isAdmin && data.role !== "ADMIN") {
+      const target = await prisma.employee.findUnique({ where: { id } });
+      if (target?.role === "ADMIN" && (await countAdmins(id)) === 0) {
+        return fail("Tem de existir pelo menos um Administrador.");
+      }
+    }
+
     await prisma.employee.update({
       where: { id },
-      data: { ...data, email: data.email || null },
+      data: {
+        name: data.name,
+        jobRole: data.jobRole,
+        department: data.department,
+        color: data.color,
+        email: data.email,
+        phone: data.phone || null,
+        active: data.active,
+        annualVacationDays: data.annualVacationDays,
+        // Role and password are admin-only; managers leave them untouched.
+        ...(isAdmin ? { role: data.role } : {}),
+        ...(isAdmin && data.password
+          ? { passwordHash: await bcrypt.hash(data.password, 12) }
+          : {}),
+      },
+    });
+    revalidateAll();
+    return ok;
+  } catch (e) {
+    return fail(friendlyEmployeeError(e));
+  }
+}
+
+/** Admin-only quick password reset for a colleague who lost theirs. */
+export async function setEmployeePassword(
+  id: string,
+  password: string
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    if (!password || password.length < 6) {
+      return fail("A palavra-passe deve ter pelo menos 6 caracteres.");
+    }
+    await prisma.employee.update({
+      where: { id },
+      data: { passwordHash: await bcrypt.hash(password, 12) },
     });
     revalidateAll();
     return ok;
@@ -105,12 +180,17 @@ export async function updateEmployee(
 
 export async function deleteEmployee(id: string): Promise<ActionResult> {
   try {
-    await requireManager();
+    const actor = await requireManager();
+    if (actor.id === id) return fail("Não pode eliminar a sua própria conta.");
+    const target = await prisma.employee.findUnique({ where: { id } });
+    if (target?.role === "ADMIN" && (await countAdmins(id)) === 0) {
+      return fail("Tem de existir pelo menos um Administrador.");
+    }
     await prisma.employee.delete({ where: { id } });
     revalidateAll();
     return ok;
   } catch (e) {
-    return fail((e as Error).message);
+    return fail(friendlyEmployeeError(e));
   }
 }
 

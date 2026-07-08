@@ -1,12 +1,10 @@
 // Bosch Car Service Lousa — Gestão de Oficina
-// Prisma schema. Uses SQLite for zero-setup local development.
+// Prisma schema (PostgreSQL / Neon).
 //
-// To move to PostgreSQL (recommended for production / SaaS):
-//   1. datasource db { provider = "postgresql" }
-//   2. DATABASE_URL="postgresql://..." in .env
-// All value-sets (roles, statuses, types) are stored as strings so the
-// schema is 100% portable between SQLite and PostgreSQL. Allowed values are
-// centralised in lib/constants.ts and validated with Zod.
+// Design: an Employee IS the user. There is no separate auth table — every
+// colaborador has login fields (email, passwordHash, role). Only an ADMIN can
+// change roles or set/reset passwords. All value-sets (roles, statuses, types)
+// are stored as strings so the schema stays portable across SQLite/PostgreSQL.
 
 generator client {
   provider = "prisma-client-js"
@@ -19,26 +17,7 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
-// Auth / access control
-// ---------------------------------------------------------------------------
-
-model User {
-  id           String   @id @default(cuid())
-  name         String?
-  email        String   @unique
-  passwordHash String
-  role         String   @default("EMPLOYEE") // ADMIN | MANAGER | RECEPTION | EMPLOYEE
-  createdAt    DateTime @default(now())
-
-  // A user account may be linked to an Employee record (self-service holidays)
-  employee   Employee? @relation(fields: [employeeId], references: [id])
-  employeeId String?   @unique
-
-  approvedVacations Vacation[] @relation("ApprovedBy")
-}
-
-// ---------------------------------------------------------------------------
-// Core: Colaboradores (employees)
+// Colaboradores (employees == users)
 // ---------------------------------------------------------------------------
 
 model Employee {
@@ -47,20 +26,25 @@ model Employee {
   jobRole            String   @default("Mecânico") // job title, e.g. Mecânico, Chefe de Oficina
   department         String   @default("Oficina")
   color              String   @default("#e2001a") // hex colour used across the Mapa de Férias
-  email              String?
+  email              String   @unique // login identifier
   phone              String?
   active             Boolean  @default(true)
   annualVacationDays Int      @default(22)
-  createdAt          DateTime @default(now())
 
-  user         User?
-  vacations    Vacation[]
-  appointments Appointment[]
-  tasks        Task[]
+  // Auth / access control
+  role         String  @default("EMPLOYEE") // ADMIN | MANAGER | RECEPTION | EMPLOYEE
+  passwordHash String? // null = login not yet enabled (admin sets the password)
+
+  createdAt DateTime @default(now())
+
+  vacations         Vacation[]
+  approvedVacations Vacation[]    @relation("ApprovedBy")
+  appointments      Appointment[]
+  tasks             Task[]
 }
 
 // ---------------------------------------------------------------------------
-// Core: Férias (vacations / absences)
+// Férias (vacations / absences)
 // ---------------------------------------------------------------------------
 
 model Vacation {
@@ -75,7 +59,7 @@ model Vacation {
   notes      String?
   createdAt  DateTime @default(now())
 
-  approvedBy   User?   @relation("ApprovedBy", fields: [approvedById], references: [id])
+  approvedBy   Employee? @relation("ApprovedBy", fields: [approvedById], references: [id])
   approvedById String?
 
   @@index([employeeId])
@@ -150,19 +134,19 @@ model Appointment {
 // ---------------------------------------------------------------------------
 
 model Task {
-  id                 String       @id @default(cuid())
-  title              String
-  description        String?
-  assignedEmployee   Employee?    @relation(fields: [assignedEmployeeId], references: [id])
-  assignedEmployeeId String?
-  relatedVehicle     Vehicle?     @relation(fields: [relatedVehicleId], references: [id])
-  relatedVehicleId   String?
-  relatedAppointment Appointment? @relation(fields: [relatedAppointmentId], references: [id])
+  id                   String       @id @default(cuid())
+  title                String
+  description          String?
+  assignedEmployee     Employee?    @relation(fields: [assignedEmployeeId], references: [id])
+  assignedEmployeeId   String?
+  relatedVehicle       Vehicle?     @relation(fields: [relatedVehicleId], references: [id])
+  relatedVehicleId     String?
+  relatedAppointment   Appointment? @relation(fields: [relatedAppointmentId], references: [id])
   relatedAppointmentId String?
-  status             String       @default("TODO") // TODO | IN_PROGRESS | DONE
-  priority           String       @default("MEDIUM") // LOW | MEDIUM | HIGH
-  dueDate            DateTime?
-  createdAt          DateTime     @default(now())
+  status               String       @default("TODO") // TODO | IN_PROGRESS | DONE
+  priority             String       @default("MEDIUM") // LOW | MEDIUM | HIGH
+  dueDate              DateTime?
+  createdAt            DateTime     @default(now())
 }
 
 // ---------------------------------------------------------------------------
@@ -170,8 +154,8 @@ model Task {
 // ---------------------------------------------------------------------------
 
 model WorkshopSettings {
-  id           String @id @default("default")
-  name         String @default("Bosch Car Service Lousa")
-  minStaffPerDay Int  @default(2) // minimum staff that must be present each working day
-  year         Int    @default(2026)
+  id             String @id @default("default")
+  name           String @default("Bosch Car Service Lousa")
+  minStaffPerDay Int    @default(2) // minimum staff that must be present each working day
+  year           Int    @default(2026)
 }

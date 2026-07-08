@@ -22,26 +22,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = credentials.email as string;
         const password = credentials.password as string;
 
-        const user = await prisma.user.findUnique({
+        // Employees ARE the users — authenticate against the Employee table.
+        const employee = await prisma.employee.findUnique({
           where: { email },
         });
 
-        if (!user || !user.passwordHash) {
+        if (!employee || !employee.passwordHash || !employee.active) {
           return null;
         }
 
-        const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+        const passwordMatch = await bcrypt.compare(
+          password,
+          employee.passwordHash
+        );
 
         if (!passwordMatch) {
           return null;
         }
 
         return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          employeeId: user.employeeId ?? null,
+          id: employee.id,
+          email: employee.email,
+          name: employee.name,
+          role: employee.role,
+          employeeId: employee.id,
         };
       },
     }),
