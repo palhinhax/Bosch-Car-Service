@@ -17,7 +17,6 @@ async function main() {
   await prisma.vehicle.deleteMany();
   await prisma.customer.deleteMany();
   await prisma.vacation.deleteMany();
-  await prisma.user.deleteMany();
   await prisma.employee.deleteMany();
 
   // ---- Workshop settings ----
@@ -61,37 +60,38 @@ async function main() {
     employees[e.name] = created;
   }
 
-  // ---- Users / access ----
-  const managerHash = await bcrypt.hash("bosch2026", 12);
-  await prisma.user.create({
+  // ---- Access / logins (an Employee IS the user) ----
+  // Manager/admin — also the approver for the vacation requests below.
+  const manager = await prisma.employee.create({
     data: {
       name: "Gestor da Oficina",
       email: "gestor@bosch-lousa.pt",
-      passwordHash: managerHash,
+      jobRole: "Gestor",
+      department: "Administração",
+      color: "#e2001a",
       role: "ADMIN",
+      passwordHash: await bcrypt.hash("bosch2026", 12),
     },
   });
-  await prisma.user.create({
+  // Reception desk login.
+  await prisma.employee.create({
     data: {
       name: "Receção",
       email: "rececao@bosch-lousa.pt",
-      passwordHash: await bcrypt.hash("bosch2026", 12),
+      jobRole: "Receção",
+      department: "Receção",
+      color: "#b0bec5",
       role: "RECEPTION",
-    },
-  });
-  // Employee self-service login linked to Rodrigo
-  await prisma.user.create({
-    data: {
-      name: "Rodrigo Bras",
-      email: "rodrigo@bosch-lousa.pt",
       passwordHash: await bcrypt.hash("bosch2026", 12),
-      role: "EMPLOYEE",
-      employeeId: employees["Rodrigo Bras"].id,
     },
   });
-
-  const manager = await prisma.user.findUnique({
-    where: { email: "gestor@bosch-lousa.pt" },
+  // Enable a self-service login for Rodrigo (created above with the crew).
+  await prisma.employee.update({
+    where: { id: employees["Rodrigo Bras"].id },
+    data: {
+      role: "EMPLOYEE",
+      passwordHash: await bcrypt.hash("bosch2026", 12),
+    },
   });
 
   // ---- Férias (example data from the brief) ----
@@ -99,7 +99,7 @@ async function main() {
     status: "APPROVED",
     category: "FERIAS",
     type: "FULL",
-    approvedById: manager!.id,
+    approvedById: manager.id,
   } as const;
 
   const vac = (
@@ -249,7 +249,9 @@ async function main() {
     "   Gestor:  gestor@bosch-lousa.pt   / bosch2026  (Administrador)"
   );
   console.log("   Receção: rececao@bosch-lousa.pt  / bosch2026  (Receção)");
-  console.log("   Colab.:  rodrigo@bosch-lousa.pt  / bosch2026  (Colaborador)");
+  console.log(
+    "   Colab.:  rodrigo.bras@bosch-lousa.pt / bosch2026  (Colaborador)"
+  );
 }
 
 main()
