@@ -1,5 +1,10 @@
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
+import { authConfig } from "@/lib/auth/config.edge";
+
+// Instantiate Auth.js from the EDGE-SAFE config only — this keeps bcryptjs and
+// the Prisma Client (both Node-only) out of the Edge middleware bundle.
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
