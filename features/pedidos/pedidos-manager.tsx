@@ -44,6 +44,7 @@ export function PedidosManager({
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [statusFilter, setStatusFilter] = useState("");
+  const [employeeFilter, setEmployeeFilter] = useState("");
   const [formOpen, setFormOpen] = useState(false);
 
   const approvedOthers = useMemo(
@@ -52,16 +53,18 @@ export function PedidosManager({
   );
 
   const rows = useMemo(() => {
-    const list = statusFilter
-      ? vacations.filter((v) => v.status === statusFilter)
-      : vacations;
+    const list = vacations.filter(
+      (v) =>
+        (!statusFilter || v.status === statusFilter) &&
+        (!employeeFilter || v.employeeId === employeeFilter)
+    );
     return [...list].sort((a, b) => {
       // pending first, then by start date
       if (a.status === "PENDING" && b.status !== "PENDING") return -1;
       if (b.status === "PENDING" && a.status !== "PENDING") return 1;
       return String(a.startDate).localeCompare(String(b.startDate));
     });
-  }, [vacations, statusFilter]);
+  }, [vacations, statusFilter, employeeFilter]);
 
   const act = (id: string, status: "APPROVED" | "REJECTED") =>
     startTransition(async () => {
@@ -97,16 +100,30 @@ export function PedidosManager({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         {canApprove && (
-          <Select
-            className="w-auto min-w-[10rem]"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">Todos os estados</option>
-            <option value="PENDING">Pendentes</option>
-            <option value="APPROVED">Aprovados</option>
-            <option value="REJECTED">Rejeitados</option>
-          </Select>
+          <>
+            <Select
+              className="w-auto min-w-[10rem]"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">Todos os estados</option>
+              <option value="PENDING">Pendentes</option>
+              <option value="APPROVED">Aprovados</option>
+              <option value="REJECTED">Rejeitados</option>
+            </Select>
+            <Select
+              className="w-auto min-w-[12rem]"
+              value={employeeFilter}
+              onChange={(e) => setEmployeeFilter(e.target.value)}
+            >
+              <option value="">Todos os colaboradores</option>
+              {employees.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
+              ))}
+            </Select>
+          </>
         )}
         <div className="ml-auto">
           <Button onClick={() => setFormOpen(true)}>
