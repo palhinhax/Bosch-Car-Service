@@ -7,6 +7,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // Infer the host from the incoming request instead of relying on a fixed
   // NEXTAUTH_URL — works across ports and behind reverse proxies.
   trustHost: true,
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   providers: [
     Credentials({
       name: "credentials",
