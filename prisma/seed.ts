@@ -31,18 +31,43 @@ async function main() {
     },
   });
 
-  // ---- Colaboradores (colours mirror the paper Mapa de Férias) ----
+  // ---- Colaboradores (== utilizadores). Colours mirror the paper map. ----
+  // Every colaborador can log in with password "bosch2026".
+  const password = await bcrypt.hash("bosch2026", 12);
   const employeesData = [
-    { name: "Rodrigo Bras", color: "#00e5ff", jobRole: "Chefe de Oficina" },
-    { name: "David Simoes", color: "#ff8ad8", jobRole: "Mecânico" },
-    { name: "Carlos Tome", color: "#8de06a", jobRole: "Mecânico" },
+    {
+      name: "Rodrigo Bras",
+      color: "#00e5ff",
+      jobRole: "Chefe de Oficina",
+      role: "MANAGER",
+    },
+    {
+      name: "David Simoes",
+      color: "#ff8ad8",
+      jobRole: "Mecânico",
+      role: "EMPLOYEE",
+    },
+    {
+      name: "Carlos Tome",
+      color: "#8de06a",
+      jobRole: "Mecânico",
+      role: "EMPLOYEE",
+    },
     {
       name: "Sandro Gandarez",
       color: "#ffe500",
       jobRole: "Técnico de Diagnóstico",
+      role: "RECEPTION",
     },
-    { name: "Mauro Carvalho", color: "#9b6ede", jobRole: "Mecânico" },
+    {
+      name: "Mauro Carvalho",
+      color: "#9b6ede",
+      jobRole: "Mecânico",
+      role: "ADMIN",
+    },
   ];
+  const emailOf = (name: string) =>
+    `${name.split(" ")[0].toLowerCase()}@bosch-lousa.pt`;
 
   const employees: Record<string, { id: string }> = {};
   for (const e of employeesData) {
@@ -54,52 +79,20 @@ async function main() {
         department: "Oficina",
         active: true,
         annualVacationDays: 22,
-        email: `${e.name.toLowerCase().replace(/\s+/g, ".")}@bosch-lousa.pt`,
+        email: emailOf(e.name),
+        role: e.role,
+        passwordHash: password,
       },
     });
     employees[e.name] = created;
   }
-
-  // ---- Access / logins (an Employee IS the user) ----
-  // Manager/admin — also the approver for the vacation requests below.
-  const manager = await prisma.employee.create({
-    data: {
-      name: "Gestor da Oficina",
-      email: "gestor@bosch-lousa.pt",
-      jobRole: "Gestor",
-      department: "Administração",
-      color: "#e2001a",
-      role: "ADMIN",
-      passwordHash: await bcrypt.hash("bosch2026", 12),
-    },
-  });
-  // Reception desk login.
-  await prisma.employee.create({
-    data: {
-      name: "Receção",
-      email: "rececao@bosch-lousa.pt",
-      jobRole: "Receção",
-      department: "Receção",
-      color: "#b0bec5",
-      role: "RECEPTION",
-      passwordHash: await bcrypt.hash("bosch2026", 12),
-    },
-  });
-  // Enable a self-service login for Rodrigo (created above with the crew).
-  await prisma.employee.update({
-    where: { id: employees["Rodrigo Bras"].id },
-    data: {
-      role: "EMPLOYEE",
-      passwordHash: await bcrypt.hash("bosch2026", 12),
-    },
-  });
 
   // ---- Férias (example data from the brief) ----
   const approved = {
     status: "APPROVED",
     category: "FERIAS",
     type: "FULL",
-    approvedById: manager.id,
+    approvedById: employees["Mauro Carvalho"].id, // an ADMIN approves
   } as const;
 
   const vac = (
@@ -244,14 +237,11 @@ async function main() {
   });
 
   console.log("✅ Concluído.");
-  console.log("\n🔐 Credenciais de acesso:");
-  console.log(
-    "   Gestor:  gestor@bosch-lousa.pt   / bosch2026  (Administrador)"
-  );
-  console.log("   Receção: rececao@bosch-lousa.pt  / bosch2026  (Receção)");
-  console.log(
-    "   Colab.:  rodrigo.bras@bosch-lousa.pt / bosch2026  (Colaborador)"
-  );
+  console.log("\n🔐 Credenciais (palavra-passe: bosch2026):");
+  console.log("   mauro@bosch-lousa.pt    — Administrador");
+  console.log("   rodrigo@bosch-lousa.pt  — Gestor");
+  console.log("   sandro@bosch-lousa.pt   — Receção");
+  console.log("   carlos@bosch-lousa.pt   — Colaborador");
 }
 
 main()
