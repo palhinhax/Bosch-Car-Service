@@ -17,6 +17,22 @@ export function listEmployees(opts: { onlyActive?: boolean } = {}) {
   });
 }
 
+/** The signed-in user's own editable profile fields. */
+export function getMyProfile(id: string) {
+  return prisma.employee.findUnique({
+    where: { id },
+    select: {
+      phone: true,
+      personalEmail: true,
+      address: true,
+      birthDate: true,
+      emergencyContactName: true,
+      emergencyContactRelation: true,
+      emergencyContactPhone: true,
+    },
+  });
+}
+
 export function getEmployee(id: string) {
   return prisma.employee.findUnique({
     where: { id },

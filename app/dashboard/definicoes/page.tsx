@@ -1,10 +1,12 @@
 import { PageHeader } from "@/components/page-header";
 import { SettingsForm } from "@/features/definicoes/settings-form";
 import { ChangePasswordForm } from "@/features/definicoes/change-password-form";
+import { ProfileForm } from "@/features/definicoes/profile-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getCurrentUser, roleCanApprove } from "@/lib/auth/session";
-import { getSettings } from "@/lib/data";
+import { getMyProfile, getSettings } from "@/lib/data";
+import { dateKey } from "@/lib/dates";
 import { ROLE_LABELS, type Role } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +30,7 @@ const roleInfo: { role: Role; perms: string }[] = [
 export default async function DefinicoesPage() {
   const [user, settings] = await Promise.all([getCurrentUser(), getSettings()]);
   const canManage = roleCanApprove(user?.role);
+  const profile = user?.id ? await getMyProfile(user.id) : null;
 
   return (
     <div className="space-y-6">
@@ -35,6 +38,28 @@ export default async function DefinicoesPage() {
         title="Definições"
         description="Configuração da oficina e permissões."
       />
+
+      {profile && (
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base">O meu perfil</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-2">
+            <ProfileForm
+              initial={{
+                phone: profile.phone ?? "",
+                personalEmail: profile.personalEmail ?? "",
+                address: profile.address ?? "",
+                birthDate: profile.birthDate ? dateKey(profile.birthDate) : "",
+                emergencyContactName: profile.emergencyContactName ?? "",
+                emergencyContactRelation:
+                  profile.emergencyContactRelation ?? "",
+                emergencyContactPhone: profile.emergencyContactPhone ?? "",
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="p-4 pb-2">

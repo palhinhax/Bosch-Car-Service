@@ -11,6 +11,7 @@ import {
   appointmentSchema,
   customerSchema,
   employeeSchema,
+  myProfileSchema,
   settingsSchema,
   taskSchema,
   vacationSchema,
@@ -18,6 +19,7 @@ import {
   type AppointmentInput,
   type CustomerInput,
   type EmployeeInput,
+  type MyProfileInput,
   type SettingsInput,
   type TaskInput,
   type VacationInput,
@@ -208,6 +210,33 @@ export async function changeOwnPassword(
       where: { id: user.id },
       data: { passwordHash: await bcrypt.hash(newPassword, 12) },
     });
+    return ok;
+  } catch (e) {
+    return fail((e as Error).message);
+  }
+}
+
+/** Self-service: the signed-in colaborador updates their own personal profile. */
+export async function updateMyProfile(
+  input: MyProfileInput
+): Promise<ActionResult> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return fail("Sessão inválida.");
+    const data = myProfileSchema.parse(input);
+    await prisma.employee.update({
+      where: { id: user.id },
+      data: {
+        phone: data.phone?.trim() || null,
+        personalEmail: data.personalEmail?.trim() || null,
+        address: data.address?.trim() || null,
+        birthDate: data.birthDate ? parseDateKey(data.birthDate) : null,
+        emergencyContactName: data.emergencyContactName?.trim() || null,
+        emergencyContactRelation: data.emergencyContactRelation?.trim() || null,
+        emergencyContactPhone: data.emergencyContactPhone?.trim() || null,
+      },
+    });
+    revalidateAll();
     return ok;
   } catch (e) {
     return fail((e as Error).message);

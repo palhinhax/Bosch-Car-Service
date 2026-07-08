@@ -31,6 +31,14 @@ model Employee {
   active             Boolean  @default(true)
   annualVacationDays Int      @default(22)
 
+  // Personal profile — self-service: each colaborador edits their own fields.
+  personalEmail            String?
+  address                  String?
+  birthDate                DateTime? // date only (stored at 00:00 UTC)
+  emergencyContactName     String?
+  emergencyContactRelation String? // e.g. Cônjuge, Pai/Mãe, Irmão(ã)
+  emergencyContactPhone    String?
+
   // Auth / access control
   role         String  @default("EMPLOYEE") // ADMIN | MANAGER | RECEPTION | EMPLOYEE
   passwordHash String? // null = login not yet enabled (admin sets the password)

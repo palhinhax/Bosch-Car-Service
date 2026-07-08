@@ -37,6 +37,23 @@ export const employeeSchema = z.object({
 });
 export type EmployeeInput = z.infer<typeof employeeSchema>;
 
+// Self-service profile — a colaborador editing their own personal details.
+// Every field is optional; login email and access control are NOT editable here.
+export const myProfileSchema = z.object({
+  phone: z.string().optional(),
+  personalEmail: z
+    .string()
+    .email("Email inválido")
+    .or(z.literal(""))
+    .optional(),
+  address: z.string().optional(),
+  birthDate: dateKey.optional().or(z.literal("")),
+  emergencyContactName: z.string().optional(),
+  emergencyContactRelation: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+});
+export type MyProfileInput = z.infer<typeof myProfileSchema>;
+
 export const vacationSchema = z
   .object({
     employeeId: z.string().min(1, "Selecione um colaborador"),
