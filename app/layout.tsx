@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -65,6 +66,7 @@ export default function RootLayout({
         </Providers>
         {/* Registers the PWA service worker (public/sw.js) on the client. */}
         <ServiceWorkerRegister />
+        <Analytics />
       </body>
     </html>
   );
